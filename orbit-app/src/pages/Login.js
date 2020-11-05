@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useContext, useState} from 'react';
 import { Form, Formik } from 'formik';
 import * as Yup from 'yup';
 import Card from '../components/common/Card';
@@ -10,6 +10,9 @@ import FormError from './../components/FormError';
 import GradientBar from './../components/common/GradientBar';
 import GradientButton from '../components/common/GradientButton';
 import logo from './../images/logo.png';
+import {publicFetch} from "../util/fetch";
+import {useHistory} from "react-router-dom";
+import {AuthContext} from "../context/AuthContext";
 
 const LoginSchema = Yup.object().shape({
   email: Yup.string().required('Email is required'),
@@ -17,13 +20,23 @@ const LoginSchema = Yup.object().shape({
 });
 
 const Login = () => {
-  const [loginSuccess, setLoginSuccess] = useState();
-  const [loginError, setLoginError] = useState();
+  const authContext = useContext(AuthContext);
+  const [loginSuccess, setLoginSuccess] = useState('');
+  const [loginError, setLoginError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
+  const history = useHistory();
 
   const submitCredentials = async credentials => {
     try {
       setLoginLoading(true);
+      const { data } = await publicFetch.post('/authenticate', credentials);
+      setLoginSuccess(data.message);
+      setLoginError('');
+      authContext.setAuthState(data);
+
+      setTimeout(() => {
+        history.push('/dashboard');
+      }, 700);
     } catch (error) {
       setLoginLoading(false);
       const { data } = error.response;
